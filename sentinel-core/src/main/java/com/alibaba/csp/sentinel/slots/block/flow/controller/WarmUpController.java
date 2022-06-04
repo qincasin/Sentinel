@@ -58,7 +58,8 @@ import com.alibaba.csp.sentinel.slots.block.flow.TrafficShapingController;
  * our cold (minimum) rate to our stable (maximum) rate, x (or q) is the
  * occupied token.
  * </p>
- *
+ * 冷启动限流算法参考了 Guava 的 SmoothRateLimiter 实现的冷启动限流算法，
+ * 但实现上有很大的区别，Sentinel 主要用于控制每秒的 QPS，不会控制每个请求的间隔时间，只要满足每秒通过的 QPS 即可。
  * @author jialiang.linjl
  */
 public class WarmUpController implements TrafficShapingController {

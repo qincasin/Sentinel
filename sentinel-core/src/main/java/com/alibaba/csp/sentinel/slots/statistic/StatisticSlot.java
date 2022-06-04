@@ -78,6 +78,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks()) {
                 handler.onPass(context, resourceWrapper, node, count, args);
             }
+            //这是特殊情况，在需要对请求限流时，只有使用默认流量效果控制器才可能会抛出 PriorityWaitException 异常
         } catch (PriorityWaitException ex) {
             node.increaseThreadNum();
             if (context.getCurEntry().getOriginNode() != null) {
@@ -128,12 +129,14 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
         if (context.getCurEntry().getBlockError() == null) {
             // Calculate response time (use completeStatTime as the time of completion).
+            //计算耗时
             long completeStatTime = TimeUtil.currentTimeMillis();
             context.getCurEntry().setCompleteTimestamp(completeStatTime);
             long rt = completeStatTime - context.getCurEntry().getCreateTimestamp();
 
             Throwable error = context.getCurEntry().getError();
 
+            // 记录执行耗时与成功总数
             // Record response time and success count.
             recordCompleteFor(node, count, rt, error);
             recordCompleteFor(context.getCurEntry().getOriginNode(), count, rt, error);

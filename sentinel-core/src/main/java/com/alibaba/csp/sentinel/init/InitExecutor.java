@@ -25,6 +25,7 @@ import com.alibaba.csp.sentinel.spi.SpiLoader;
 
 /**
  * Load registered init functions and execute in order.
+ *  加载注册的init函数并按顺序执行。
  *
  * @author Eric Zhao
  */
@@ -37,6 +38,8 @@ public final class InitExecutor {
      * will immediately be interrupted and the application will exit.
      *
      * The initialization will be executed only once.
+     * 如果一个 {@link InitFunc} 抛出异常，init 进程将立即中断，应用程序将退出。
+     * 初始化只会执行一次
      */
     public static void doInit() {
         if (!initialized.compareAndSet(false, true)) {

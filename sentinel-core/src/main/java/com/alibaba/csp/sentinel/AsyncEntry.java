@@ -36,7 +36,7 @@ public class AsyncEntry extends CtEntry {
     }
 
     /**
-     * Remove current entry from local context, but does not exit.
+     * Remove current entry from local context, but does not exit. remove current entry 从当前上线文中，但是并不exit
      */
     void cleanCurrentEntryInLocal() {
         if (context instanceof NullContext) {

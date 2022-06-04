@@ -118,7 +118,7 @@ public class SlowRatioCircuitBreakerDemo {
             .setCount(50)
             // Retry timeout (in second)
             .setTimeWindow(10)
-            // Circuit breaker opens when slow request ratio > 60%
+            // Circuit breaker opens when slow request ratio > 60%  请求比率慢时断路器打开
             .setSlowRatioThreshold(0.6)
             .setMinRequestAmount(100)
             .setStatIntervalMs(20000);

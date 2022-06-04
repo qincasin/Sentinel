@@ -37,12 +37,14 @@ public abstract class AbstractLinkedProcessorSlot<T> implements ProcessorSlot<T>
     void transformEntry(Context context, ResourceWrapper resourceWrapper, Object o, int count, boolean prioritized, Object... args)
         throws Throwable {
         T t = (T)o;
+        //调用下一个 ProcessorSlot 的entry 方法
         entry(context, resourceWrapper, t, count, prioritized, args);
     }
 
     @Override
     public void fireExit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         if (next != null) {
+            //调用下一个 ProcessorSlot 的 exit 方法
             next.exit(context, resourceWrapper, count, args);
         }
     }

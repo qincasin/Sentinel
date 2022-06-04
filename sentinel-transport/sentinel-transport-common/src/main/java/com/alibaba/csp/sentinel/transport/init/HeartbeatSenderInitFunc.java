@@ -31,6 +31,7 @@ import com.alibaba.csp.sentinel.transport.config.TransportConfig;
 
 /**
  * Global init function for heartbeat sender.
+ * 心跳发送者的全局初始化函数。
  *
  * @author Eric Zhao
  */

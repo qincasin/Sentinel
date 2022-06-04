@@ -458,6 +458,7 @@ public class SentinelApiClient {
     }
 
     public List<FlowRuleEntity> fetchFlowRuleOfMachine(String app, String ip, int port) {
+        //这个里面会发起http请求，获取rules列表信息
         List<FlowRule> rules = fetchRules(ip, port, FLOW_RULE_TYPE, FlowRule.class);
         if (rules != null) {
             return rules.stream().map(rule -> FlowRuleEntity.fromFlowRule(app, ip, port, rule))

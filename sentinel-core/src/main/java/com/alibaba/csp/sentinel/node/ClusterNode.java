@@ -38,6 +38,19 @@ import com.alibaba.csp.sentinel.util.AssertUtil;
  * origin.<br/>
  * Note that 'origin' usually is Service Consumer's app name.
  * </p>
+ * <p>
+ *    此类存储资源的汇总运行时统计信息，包括 rt、线程数、qps
+ *   等等。 相同的资源在全球范围内共享相同的 {@link ClusterNode}，无论在哪个
+ *    {@link com.alibaba.csp.sentinel.context.Context}。
+ *    </p>
+ *    <p>
+ *    区分不同来源的调用（在
+ *    {@link ContextUtil#enter(String name, String origin)}),
+ *    一个 {@link ClusterNode} 拥有一个 {@link #originCountMap}，这个map拥有 {@link StatisticNode}
+ *    不同来源。 使用 {@link #getOrCreateOriginNode(String)} 获取特定的 {@link Node}
+ *    来源。<br/>
+ *    请注意，“来源”通常是服务消费者的应用名称。
+ *    </p>
  *
  * @author qinan.qn
  * @author jialiang.linjl

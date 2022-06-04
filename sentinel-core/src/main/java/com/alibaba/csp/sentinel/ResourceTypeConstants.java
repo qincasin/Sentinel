@@ -21,11 +21,11 @@ package com.alibaba.csp.sentinel;
  */
 public final class ResourceTypeConstants {
 
-    public static final int COMMON = 0;
-    public static final int COMMON_WEB = 1;
-    public static final int COMMON_RPC = 2;
-    public static final int COMMON_API_GATEWAY = 3;
-    public static final int COMMON_DB_SQL = 4;
+    public static final int COMMON = 0; //默认
+    public static final int COMMON_WEB = 1; //web 应用
+    public static final int COMMON_RPC = 2; //Dubbo 框架的 RPC 接口
+    public static final int COMMON_API_GATEWAY = 3; //用于 API Gateway 网关
+    public static final int COMMON_DB_SQL = 4;//数据库 SQL 操作
 
     private ResourceTypeConstants() {}
 }

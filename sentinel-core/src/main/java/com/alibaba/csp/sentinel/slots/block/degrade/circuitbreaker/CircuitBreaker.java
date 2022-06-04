@@ -21,7 +21,7 @@ import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
 
 /**
  * <p>Basic <a href="https://martinfowler.com/bliki/CircuitBreaker.html">circuit breaker</a> interface.</p>
- *
+ * 断路器
  * @author Eric Zhao
  */
 public interface CircuitBreaker {
@@ -62,6 +62,7 @@ public interface CircuitBreaker {
     enum State {
         /**
          * In {@code OPEN} state, all requests will be rejected until the next recovery time point.
+         * 在 {@code OPEN} 状态下，所有请求都将被拒绝，直到下一个恢复时间点。
          */
         OPEN,
         /**

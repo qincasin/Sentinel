@@ -142,6 +142,12 @@ public abstract class AbstractSentinelAspectSupport {
         throws Throwable {
 
         // Execute block handler if configured.
+        /**
+         * 参数1 pjp
+         * 参数2 注解中的blockHandler
+         * 参数3 注解中的 blockHandlerClass
+         * 如果这个时候注解里面配置了blockHandler提取
+         */
         Method blockHandlerMethod = extractBlockHandlerMethod(pjp, annotation.blockHandler(),
             annotation.blockHandlerClass());
         if (blockHandlerMethod != null) {
@@ -150,6 +156,7 @@ public abstract class AbstractSentinelAspectSupport {
             Object[] args = Arrays.copyOf(originArgs, originArgs.length + 1);
             args[args.length - 1] = ex;
             try {
+                //必须是static的
                 if (isStatic(blockHandlerMethod)) {
                     return blockHandlerMethod.invoke(null, args);
                 }
@@ -160,7 +167,7 @@ public abstract class AbstractSentinelAspectSupport {
             }
         }
 
-        // If no block handler is present, then go to fallback.
+        // If no block handler is present, then go to fallback.  如果没有配置对应的 block handler ，则默认会走fallback逻辑
         return handleFallback(pjp, annotation, ex);
     }
 
@@ -174,7 +181,7 @@ public abstract class AbstractSentinelAspectSupport {
         if (m == null) {
             // First time, resolve the fallback.
             Method method = resolveFallbackInternal(pjp, fallbackName, clazz, mustStatic);
-            // Cache the method instance.
+            // Cache the method instance. 放入 FALLBACK_MAP map中
             ResourceMetadataRegistry.updateFallbackFor(clazz, fallbackName, method);
             return method;
         }
@@ -241,6 +248,13 @@ public abstract class AbstractSentinelAspectSupport {
         return method;
     }
 
+    /**
+     * 参数1 pjp
+     * 参数2 注解中的blockHandler
+     * 参数3 注解中的 blockHandlerClass
+     * 如果这个时候注解里面配置了blockHandler提取
+     */
+
     private Method extractBlockHandlerMethod(ProceedingJoinPoint pjp, String name, Class<?>[] locationClass) {
         if (StringUtil.isBlank(name)) {
             return null;
@@ -248,17 +262,19 @@ public abstract class AbstractSentinelAspectSupport {
 
         boolean mustStatic = locationClass != null && locationClass.length >= 1;
         Class<?> clazz;
+        //locationClass 对应的函数必须为static，否则是无法解析的
         if (mustStatic) {
             clazz = locationClass[0];
         } else {
             // By default current class.
             clazz = pjp.getTarget().getClass();
         }
+        //从缓存中取 name 方法名，如果取不到下面会放进 BLOCK_HANDLER_MAP map中
         MethodWrapper m = ResourceMetadataRegistry.lookupBlockHandler(clazz, name);
         if (m == null) {
-            // First time, resolve the block handler.
+            // First time, resolve the block handler.  反射提取block handler 中的方法
             Method method = resolveBlockHandlerInternal(pjp, name, clazz, mustStatic);
-            // Cache the method instance.
+            // Cache the method instance. 缓存该方法名称  ；将其放入在 BLOCK_HANDLER_MAP map 中
             ResourceMetadataRegistry.updateBlockHandlerFor(clazz, name, method);
             return method;
         }

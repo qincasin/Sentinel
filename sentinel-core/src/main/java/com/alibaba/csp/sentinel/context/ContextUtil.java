@@ -45,15 +45,17 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
 public class ContextUtil {
 
     /**
-     * Store the context in ThreadLocal for easy access.
+     * Store the context in ThreadLocal for easy access. 将context 存储在上下文中，以便于访问
      */
     private static ThreadLocal<Context> contextHolder = new ThreadLocal<>();
 
     /**
      * Holds all {@link EntranceNode}. Each {@link EntranceNode} is associated with a distinct context name.
+     * 持有所有 {@link EntranceNode}。每个 {@link EntranceNode} 都与一个不同的上下文名称相关联。
      */
     private static volatile Map<String, DefaultNode> contextNameNodeMap = new HashMap<>();
 
+    //可重入锁
     private static final ReentrantLock LOCK = new ReentrantLock();
     private static final Context NULL_CONTEXT = new NullContext();
 
@@ -85,12 +87,17 @@ public class ContextUtil {
      * Enter the invocation context, which marks as the entrance of an invocation chain.
      * The context is wrapped with {@code ThreadLocal}, meaning that each thread has it's own {@link Context}.
      * New context will be created if current thread doesn't have one.
+     * 进入调用上下文，标记为调用链的入口。上下文用 {@code ThreadLocal} 包装，这意味着每个线程都有自己的 {@link Context}。
+     * 如果当前线程没有上下文，则将创建新上下文。 <p
      * </p>
      * <p>
      * A context will be bound with an {@link EntranceNode}, which represents the entrance statistic node
      * of the invocation chain. New {@link EntranceNode} will be created if
      * current context does't have one. Note that same context name will share
      * same {@link EntranceNode} globally.
+     * 一个上下文会绑定一个{@link EntranceNode}，代表调用链的入口统计节点。
+     * 如果当前上下文没有，则将创建新的 {@link EntranceNode}。
+     * 请注意，相同的上下文名称将在全局范围内共享相同的 {@link EntranceNode}。
      * </p>
      * <p>
      * The origin node will be created in {@link com.alibaba.csp.sentinel.slots.clusterbuilder.ClusterBuilderSlot}.
@@ -98,15 +105,21 @@ public class ContextUtil {
      * {@link Node}, meaning that total amount of created origin statistic nodes will be:<br/>
      * {@code distinct resource name amount * distinct origin count}.<br/>
      * So when there are too many origins, memory footprint should be carefully considered.
+     * 源节点将在 {@link com.alibaba.csp.sentinel.slots.clusterbuilder.ClusterBuilderSlot} 中创建。
+     * 请注意，不同资源的每一个不同的{@code origin}都会导致创建不同的新{@link Node}，这意味着创建的源统计节点的总数将为
+     * ：<br> {@code distinct resource name amount distinct origin count} .<br>
+     * 所以当origin太多的时候，内存占用要慎重考虑。
      * </p>
      * <p>
      * Same resource in different context will count separately, see {@link NodeSelectorSlot}.
+     * 不同上下文中的相同资源将分别计算，请参阅 {@link NodeSelectorSlot}。
      * </p>
      *
      * @param name   the context name
      * @param origin the origin of this invocation, usually the origin could be the Service
      *               Consumer's app name. The origin is useful when we want to control different
      *               invoker/consumer separately.
+     *               此调用的来源，通常来源可以是服务消费者的应用程序名称。当我们想分别控制不同的invokerconsumer时，origin很有用。
      * @return The invocation context of the current thread
      */
     public static Context enter(String name, String origin) {

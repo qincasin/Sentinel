@@ -29,6 +29,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.concurrent.TimeUnit;
 
 @Controller
 @RequestMapping(value = "/registry", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -74,4 +77,12 @@ public class MachineRegistryController {
             return Result.ofFail(-1, e.getMessage());
         }
     }
+    public static void main(String[] args) throws Exception{
+        RestTemplate restTemplate = new RestTemplate();
+        for (int i = 0; i < 1000; i++) {
+            String resp = restTemplate.getForObject("http://localhost:9527/save", String.class);
+            TimeUnit.MILLISECONDS.sleep(300);
+        }
+    }
+
 }

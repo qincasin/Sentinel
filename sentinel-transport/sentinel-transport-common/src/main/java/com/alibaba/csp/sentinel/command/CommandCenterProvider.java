@@ -21,6 +21,7 @@ import com.alibaba.csp.sentinel.spi.SpiLoader;
 
 /**
  * Provider for a universal {@link CommandCenter} instance.
+ * 通用 {@link CommandCenter} 实例的提供程序。
  *
  * @author cdfive
  * @since 1.5.0

@@ -17,6 +17,7 @@ package com.alibaba.csp.sentinel.command;
 
 /**
  * Represent a handler that handles a {@link CommandRequest}.
+ * 表示处理 {@link CommandRequest} 的处理程序。
  *
  * @author Eric Zhao
  */

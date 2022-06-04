@@ -124,10 +124,11 @@ import java.util.Map;
  * @see EntranceNode
  * @see ContextUtil
  */
-@Spi(isSingleton = false, order = Constants.ORDER_NODE_SELECTOR_SLOT)
+@Spi(isSingleton = false, order = Constants.ORDER_NODE_SELECTOR_SLOT) //-1000 最早执行
 public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
 
     /**
+     *  Context 的 name -> 资源的 DefaultNode
      * {@link DefaultNode}s of the same resource in different context.
      */
     private volatile Map<String, DefaultNode> map = new HashMap<String, DefaultNode>(10);
@@ -135,24 +136,6 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, Object obj, int count, boolean prioritized, Object... args)
         throws Throwable {
-        /*
-         * It's interesting that we use context name rather resource name as the map key.
-         *
-         * Remember that same resource({@link ResourceWrapper#equals(Object)}) will share
-         * the same {@link ProcessorSlotChain} globally, no matter in which context. So if
-         * code goes into {@link #entry(Context, ResourceWrapper, DefaultNode, int, Object...)},
-         * the resource name must be same but context name may not.
-         *
-         * If we use {@link com.alibaba.csp.sentinel.SphU#entry(String resource)} to
-         * enter same resource in different context, using context name as map key can
-         * distinguish the same resource. In this case, multiple {@link DefaultNode}s will be created
-         * of the same resource name, for every distinct context (different context name) each.
-         *
-         * Consider another question. One resource may have multiple {@link DefaultNode},
-         * so what is the fastest way to get total statistics of the same resource?
-         * The answer is all {@link DefaultNode}s with same resource name share one
-         * {@link ClusterNode}. See {@link ClusterBuilderSlot} for detail.
-         */
         DefaultNode node = map.get(context.getName());
         if (node == null) {
             synchronized (this) {
@@ -163,13 +146,42 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
                     cacheMap.putAll(map);
                     cacheMap.put(context.getName(), node);
                     map = cacheMap;
-                    // Build invocation tree
+                    // Build invocation tree   绑定调用树
+                    /**
+                     * 调用 hello 一次
+                     *            ROOT (machine-root)
+                     *                 /
+                     *       EntranceNode (context name: sentinel_spring_web_context)
+                     *              /
+                     * DefaultNode （resource name: GET:/hello）
+                     *
+                     * 再次调用error一次
+                     *                         ROOT (machine-root)
+                     *                             /
+                     *       EntranceNode (context name: sentinel_spring_web_context)
+                     *                     /                                \
+                     * DefaultNode （resource name: GET:/hello）     DefaultNode （resource name: GET:/err）
+                     *
+                     *
+                     * 调用一次 hello，hello中执行一次 rpc调用 hello2
+                     *                     ROOT (machine-root)
+                     *                     /
+                     *     EntranceNode (name: sentinel_spring_web_context)
+                     *                  /                       \
+                     *           DefaultNode （GET:/hello）   .........
+                     *                /
+                     *          DefaultNode  (POST:/hello2)  双向链表
+                     *
+                     *
+                     *
+                     */
                     ((DefaultNode) context.getLastNode()).addChild(node);
                 }
 
             }
         }
 
+        //替换 Context 的 curNode 为当前 DefaultNode
         context.setCurNode(node);
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }

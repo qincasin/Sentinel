@@ -57,6 +57,7 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
             Object result = pjp.proceed();
             return result;
         } catch (BlockException ex) {
+            //抛出BlockException
             return handleBlockException(pjp, annotation, ex);
         } catch (Throwable ex) {
             Class<? extends Throwable>[] exceptionsToIgnore = annotation.exceptionsToIgnore();

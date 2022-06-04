@@ -35,6 +35,9 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 /**
  * Benchmark for Sentinel entries.
@@ -136,5 +139,12 @@ public class SentinelEntryBenchmark {
     @Threads(16)
     public void test16ThreadsSingleEntry() {
         doSomethingWithEntry();
+    }
+
+    public static void main(String[] args) throws Exception{
+        Options optionsBuilder = new OptionsBuilder()
+                .include(SentinelEntryBenchmark.class.getSimpleName())
+                .build();
+        new Runner(optionsBuilder).run();
     }
 }

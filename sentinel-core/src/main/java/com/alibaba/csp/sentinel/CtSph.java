@@ -47,6 +47,7 @@ public class CtSph implements Sph {
     /**
      * Same resource({@link ResourceWrapper#equals(Object)}) will share the same
      * {@link ProcessorSlotChain}, no matter in which {@link Context}.
+     * 资源与ProcessorSlotChain 的映射  key：资源id，value：ProcessorSlotChain
      */
     private static volatile Map<ResourceWrapper, ProcessorSlotChain> chainMap
         = new HashMap<ResourceWrapper, ProcessorSlotChain>();
@@ -79,6 +80,7 @@ public class CtSph implements Sph {
             return asyncEntryWithNoChain(resourceWrapper, context);
         }
 
+        //开始构建 chain
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         // Means processor cache size exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE}, so no rule checking will be done.
@@ -89,14 +91,16 @@ public class CtSph implements Sph {
         AsyncEntry asyncEntry = new AsyncEntry(resourceWrapper, chain, context);
         try {
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
-            // Initiate the async context only when the entry successfully passed the slot chain.
+            // Initiate the async context only when the entry successfully passed the slot chain. // 仅当 entry 成功通过 链表 时才启动异步上下文。
             asyncEntry.initAsyncContext();
             // The asynchronous call may take time in background, and current context should not be hanged on it.
             // So we need to remove current async entry from current context.
+            //异步调用在后台可能需要一些时间，当前上下文不应该挂在它上面。所以我们需要从当前上下文中删除当前的异步条目
             asyncEntry.cleanCurrentEntryInLocal();
         } catch (BlockException e1) {
+            //走到这里说明 触发熔断了 ！！
             // When blocked, the async entry will be exited on current context.
-            // The async context will not be initialized.
+            // The async context will not be initialized. 当触发熔断时，异步 entry 将在当前上下文中退出。需要说明的一点 异步上下文不会被初始化。
             asyncEntry.exitForContext(context, count, args);
             throw e1;
         } catch (Throwable e1) {
@@ -124,7 +128,7 @@ public class CtSph implements Sph {
         }
 
         if (context == null) {
-            // Using default context.
+            // Using default context.  sentinel_default_context
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
@@ -132,7 +136,7 @@ public class CtSph implements Sph {
         if (!Constants.ON) {
             return new CtEntry(resourceWrapper, null, context);
         }
-
+        //开始构建 chain
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         /*
@@ -145,8 +149,11 @@ public class CtSph implements Sph {
 
         Entry e = new CtEntry(resourceWrapper, chain, context);
         try {
+
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
         } catch (BlockException e1) {
+            //走到这里说明 触发熔断了 ！！
+
             e.exit(count, args);
             throw e1;
         } catch (Throwable e1) {

@@ -82,7 +82,65 @@ import com.alibaba.csp.sentinel.util.function.Predicate;
  *                                                      ^
  *                                                      |
  *                                                    request
+ *
+ *
  * </pre>
+ *
+ * <p>统计节点保存三种实时统计指标：</p>
+ *  <ol>
+ *  <li>二级指标 ({@code rollingCounterInSecond})</li>
+ *  <li>以分钟为单位的指标 ({@code rollingCounterInMinute})</li>
+ *  <li>线程数</li>
+ *  </ol>
+ *
+ *  <p>
+ *  Sentinel 使用滑动窗口实时记录和统计资源统计信息。
+ *  {@link ArrayMetric} 背后的滑动窗口基础结构是 {@code LeapArray}。
+ *  </p>
+ *
+ *  <p>
+ *  案例1：当第一个请求进来时，Sentinel 会创建一个新的窗口桶
+ *  存储运行静态数据的指定时间跨度，例如总响应时间（rt），
+ * 传入请求（QPS），阻塞请求（bq）等。时间跨度由样本数定义。
+ *  </p>
+ *  <pre>
+ *  0       100毫秒
+ *  +--------+--→ 滑动窗口
+ *      ^
+ *      |
+ *     request
+ *  </pre>
+ *  <p>
+ *  Sentinel 使用有效存储桶的静态数据来决定是否可以通过此请求。
+ *  例如，如果一个规则定义了只能通过 100 个请求，
+ *  它将对有效桶中的所有 qps 求和，并将其与规则中定义的阈值进行比较。
+ *  </p>
+ *
+ *  <p>案例2：连续请求</p>
+ *  <前>
+ *  0       100ms  200ms    300ms
+ *  +-------+-------+--------+-----→ 滑动窗口
+ *                      ^
+ *                      |
+ *                    request
+ *  </pre>
+ *
+ *  <p>案例3：请求源源不断，之前的bucket失效</p>
+ *  <pre>
+ *  0       100ms   200ms   800ms   900ms   1000ms    1300ms
+ *  +-------+-------+ ...... +--------+-------+ ...... +-- -----+-----→ 滑动窗口
+ *                                                          ^
+ *                                                          |
+ *                                                        request
+ *  </pre>
+ *
+ *  <p>滑动窗口应该变成：</p>
+ *  <前>
+ *  300ms 800ms 900ms 1000ms 1300ms
+ *  + ...... +--------+ ...... +--------+-----→ 滑动窗口
+ *                                                  ^
+ *                                                  |
+ *                                                 request
  *
  * @author qinan.qn
  * @author jialiang.linjl
@@ -92,6 +150,7 @@ public class StatisticNode implements Node {
     /**
      * Holds statistics of the recent {@code INTERVAL} seconds. The {@code INTERVAL} is divided into time spans
      * by given {@code sampleCount}.
+     * 保存最近 {@code INTERVAL} 秒的统计信息。 {@code INTERVAL} 按给定的 {@code sampleCount} 划分为时间跨度
      */
     private transient volatile Metric rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT,
         IntervalProperty.INTERVAL);
@@ -99,16 +158,19 @@ public class StatisticNode implements Node {
     /**
      * Holds statistics of the recent 60 seconds. The windowLengthInMs is deliberately set to 1000 milliseconds,
      * meaning each bucket per second, in this way we can get accurate statistics of each second.
+     * 保存最近 60 秒的统计信息。 windowLengthInMs 特意设置为 1000 毫秒，意思是每桶每秒，这样我们就可以得到每一秒的准确统计
      */
     private transient Metric rollingCounterInMinute = new ArrayMetric(60, 60 * 1000, false);
 
     /**
      * The counter for thread count.
+     * 线程计数的计数器。
      */
     private LongAdder curThreadNum = new LongAdder();
 
     /**
      * The last timestamp when metrics were fetched.
+     * 获取指标时的最后一个时间戳。
      */
     private long lastFetchTime = -1;
 

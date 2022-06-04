@@ -24,12 +24,16 @@ import com.alibaba.csp.sentinel.node.Node;
 
 /**
  * @author jialiang.linjl
+ * 匀速流控效果是漏桶算法结合虚拟队列等待机制实现的
  */
 public class RateLimiterController implements TrafficShapingController {
 
+    //请求在虚拟队列中的最大等待时间，默认 500 毫秒。
     private final int maxQueueingTimeMs;
+    //限流 QPS 阈值
     private final double count;
 
+    //最近一个请求通过的时间，用于计算下一个请求的预期通过时间
     private final AtomicLong latestPassedTime = new AtomicLong(-1);
 
     public RateLimiterController(int timeOut, double count) {
@@ -55,14 +59,17 @@ public class RateLimiterController implements TrafficShapingController {
         }
 
         long currentTime = TimeUtil.currentTimeMillis();
-        // Calculate the interval between every two requests.
+        // Calculate the interval between every two requests. 计算队列中连续的两个请求的通过时间的间隔时长
+        //假设阈值 QPS 为 200，那么连续的两个请求的通过时间间隔为 5 毫秒，每 5 毫秒通过一个请求就是匀速的速率，即每 5 毫秒允许通过一个请求。
         long costTime = Math.round(1.0 * (acquireCount) / count * 1000);
 
-        // Expected pass time of this request.
+        // Expected pass time of this request.计算当前请求期望的通过时间
+        // 请求通过的间隔时间加上最近一个请求通过的时间就是当前请求预期通过的时间。
         long expectedTime = costTime + latestPassedTime.get();
 
         if (expectedTime <= currentTime) {
             // Contention may exist here, but it's okay.
+            //期望通过时间少于当前时间则当前请求可通过并且可以立即通过
             latestPassedTime.set(currentTime);
             return true;
         } else {
@@ -75,10 +82,12 @@ public class RateLimiterController implements TrafficShapingController {
                 try {
                     waitTime = oldTime - TimeUtil.currentTimeMillis();
                     if (waitTime > maxQueueingTimeMs) {
+                        //如果等待时间超过队列允许的最大排队时间则回退一个间隔时间，并拒绝当前请求
                         latestPassedTime.addAndGet(-costTime);
                         return false;
                     }
                     // in race condition waitTime may <= 0
+                    //休眠等待
                     if (waitTime > 0) {
                         Thread.sleep(waitTime);
                     }

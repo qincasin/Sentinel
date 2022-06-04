@@ -34,6 +34,15 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
  * This class may have a list of sub {@link DefaultNode}s. Child nodes will be created when
  * calling {@link SphU}#entry() or {@link SphO}@entry() multiple times in the same {@link Context}.
  * </p>
+ *  <p>
+ *  一个 {@link Node} 用于保存特定上下文中特定资源名称的统计信息。
+ *   每个不同 {@link Context} 中的每个不同资源将对应一个 {@link DefaultNode}。
+ *   </p>
+ *   <p>
+ *   这个类可能有一个子 {@link DefaultNode} 的列表。 子节点将在
+ *   在同一个 {@link Context} 中多次调用 {@link SphU}#entry() 或 {@link SphO}@entry()。
+ *   </p>
+ *
  *
  * @author qinan.qn
  * @see NodeSelectorSlot
@@ -42,16 +51,19 @@ public class DefaultNode extends StatisticNode {
 
     /**
      * The resource associated with the node.
+     * 与节点关联的资源。
      */
     private ResourceWrapper id;
 
     /**
      * The list of all child nodes.
+     * 所有子节点的列表
      */
     private volatile Set<Node> childList = new HashSet<>();
 
     /**
      * Associated cluster node.
+     * 关联的集群节点。
      */
     private ClusterNode clusterNode;
 
@@ -74,6 +86,7 @@ public class DefaultNode extends StatisticNode {
 
     /**
      * Add child node to current node.
+     * 将子节点添加到当前节点。
      *
      * @param node valid child node
      */
@@ -97,6 +110,7 @@ public class DefaultNode extends StatisticNode {
 
     /**
      * Reset the child node list.
+     * 重置子节点列表
      */
     public void removeChildList() {
         this.childList = new HashSet<>();

@@ -31,6 +31,15 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
  * globally.
  * </p>
  *
+ *  <p>
+ *  一个{@link Node}代表调用树的入口。
+ *  </p>
+ *  <p>
+ *  一个 {@link Context} 将与一个 {@link EntranceNode} 相关，
+ *  代表调用树的入口。 新的 {@link EntranceNode} 将被创建，如果
+ *  当前上下文没有。 请注意，相同的上下文名称将共享相同的 {@link EntranceNode}
+ *  全球。
+ *  </p>
  * @author qinan.qn
  * @see ContextUtil
  * @see ContextUtil#enter(String, String)

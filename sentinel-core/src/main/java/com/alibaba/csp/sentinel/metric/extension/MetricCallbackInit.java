@@ -22,6 +22,7 @@ import com.alibaba.csp.sentinel.slots.statistic.StatisticSlotCallbackRegistry;
 
 /**
  * Register callbacks for metric extension.
+ * 为metric扩展注册回调。
  *
  * @author Carpenter Lee
  * @since 1.6.1

@@ -23,6 +23,7 @@ import com.alibaba.csp.sentinel.context.Context;
  */
 public class DefaultProcessorSlotChain extends ProcessorSlotChain {
 
+    //代表指向链表头结点的 first 属性,这里 头结点是一个空的 AbstractLinkedProcessorSlot
     AbstractLinkedProcessorSlot<?> first = new AbstractLinkedProcessorSlot<Object>() {
 
         @Override
@@ -37,6 +38,7 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain {
         }
 
     };
+    //end 执行链表的尾结点
     AbstractLinkedProcessorSlot<?> end = first;
 
     @Override
@@ -50,7 +52,9 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain {
 
     @Override
     public void addLast(AbstractLinkedProcessorSlot<?> protocolProcessor) {
+        //设置下一个处理器
         end.setNext(protocolProcessor);
+        //将下一个处理器指向 end
         end = protocolProcessor;
     }
 
@@ -69,12 +73,14 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain {
         return first.getNext();
     }
 
+    //调用头结点的 entry
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, Object t, int count, boolean prioritized, Object... args)
         throws Throwable {
         first.transformEntry(context, resourceWrapper, t, count, prioritized, args);
     }
 
+    // 调用头结点的 exit
     @Override
     public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         first.exit(context, resourceWrapper, count, args);

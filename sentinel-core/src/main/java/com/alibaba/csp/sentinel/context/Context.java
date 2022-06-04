@@ -24,7 +24,7 @@ import com.alibaba.csp.sentinel.node.Node;
 import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
 
 /**
- * This class holds metadata of current invocation:<br/>
+ * This class holds metadata of current invocation:<br/> 此类保存当前调用链的元数据
  *
  * <ul>
  * <li>the {@link EntranceNode}: the root of the current invocation
@@ -63,6 +63,7 @@ public class Context {
 
     /**
      * The entrance node of current invocation tree.
+     * 当前调用树的入口节点
      */
     private DefaultNode entranceNode;
 
