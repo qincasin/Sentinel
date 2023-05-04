@@ -77,6 +77,9 @@ public class ClusterNode extends StatisticNode {
      * So we didn't use concurrent map here, but a lock, as this lock only happens
      * at the very beginning while concurrent map will hold the lock all the time.
      * </p>
+     * <p>原始映射为一个特定资源保存一对：(origin, originNode)。<p>
+     * <p>应用程序运行的时间越长，这个映射就会变得越稳定。所以我们这里没有使用并发映射，而是一个锁，因为这个锁只在最开始发生，而并发映射会一直持有锁。
+     * <p>
      */
     private Map<String, StatisticNode> originCountMap = new HashMap<>();
 
@@ -106,9 +109,12 @@ public class ClusterNode extends StatisticNode {
      * <p>Get {@link Node} of the specific origin. Usually the origin is the Service Consumer's app name.</p>
      * <p>If the origin node for given origin is absent, then a new {@link StatisticNode}
      * for the origin will be created and returned.</p>
+     * <p>获取特定来源的{@link Node}。通常源是服务消费者的应用程序名称。<p>
+     * <p>如果给定源的源节点不存在，则将为源创建并返回一个新的 {@link StatisticNode}。<p>
      *
      * @param origin The caller's name, which is designated in the {@code parameter} parameter
      *               {@link ContextUtil#enter(String name, String origin)}.
+     *               origin调用者的名字，在 {@code parameter} 参数 {@link ContextUtilenter(String name, String origin)} 中指定
      * @return the {@link Node} of the specific origin
      */
     public Node getOrCreateOriginNode(String origin) {

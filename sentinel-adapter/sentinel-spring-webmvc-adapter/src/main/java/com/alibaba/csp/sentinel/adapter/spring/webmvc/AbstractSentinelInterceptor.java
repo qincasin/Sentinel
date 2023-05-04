@@ -40,7 +40,14 @@ import org.springframework.web.servlet.ModelAndView;
  * dispathing "onion" though which we could figure out whether we are in initial type "REQUEST".
  * That means the sub-requests which we rarely meet in practice will NOT be recorded in Sentinel.
  * <p>
+ * 由于如果发生任何转发或包含或其他操作（请参阅{@link javax.servlet.ServletRequestgetDispatcherType()}），
+ * 请求可能会在流程中重新处理，我们将只处理初始请求。
+ * 因此，我们使用 <b>reference count<b> 来跟踪“洋葱”，
+ * 虽然我们可以确定我们是否处于初始类型“REQUEST”中。
+ * 这意味着我们在实践中很少遇到的子请求将不会记录在 Sentinel 中。 <p>
+ *
  * How to implement a forward sub-request in your action:
+ * 如何在您的操作中实现转发子请求：
  * <pre>
  * initalRequest() {
  *     ModelAndView mav = new ModelAndView();

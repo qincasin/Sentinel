@@ -134,6 +134,7 @@ public class ContextUtil {
         Context context = contextHolder.get();
         if (context == null) {
             Map<String, DefaultNode> localCacheNameMap = contextNameNodeMap;
+            //double check lock
             DefaultNode node = localCacheNameMap.get(name);
             if (node == null) {
                 if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
@@ -149,9 +150,10 @@ public class ContextUtil {
                                 return NULL_CONTEXT;
                             } else {
                                 node = new EntranceNode(new StringResourceWrapper(name, EntryType.IN), null);
-                                // Add entrance node.
+                                // Add entrance node. 添加入口节点。
                                 Constants.ROOT.addChild(node);
-
+                                // 一个项目只有 一个node ，在这个时候将 EntranceNode 添加到 root 根 节点中，最后在将 本次 的 EntranceNode 添加到 缓存中去
+                                //copy on write   ---- 阻塞写不阻塞读 ，防止并发修改异常
                                 Map<String, DefaultNode> newMap = new HashMap<>(contextNameNodeMap.size() + 1);
                                 newMap.putAll(contextNameNodeMap);
                                 newMap.put(name, node);
@@ -163,6 +165,7 @@ public class ContextUtil {
                     }
                 }
             }
+            //初始化来源，将 context 写入 tl中
             context = new Context(node, name);
             context.setOrigin(origin);
             contextHolder.set(context);

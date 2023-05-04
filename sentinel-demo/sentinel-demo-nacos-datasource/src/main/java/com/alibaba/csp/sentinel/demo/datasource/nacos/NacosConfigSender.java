@@ -54,6 +54,8 @@ public class NacosConfigSender {
                 + "        \"grade\": 1,\n" + "        \"id\": 39,\n" + "        \"ip\": \"172.17.121.64\",\n"
                 + "        \"limitApp\": \"default\",\n" + "        \"port\": 8719,\n"
                 + "        \"resource\": \"/redis/get\",\n" + "        \"strategy\": 0\n" + "    }\n" + "]";
+
+        final String rule2 = "userVersionTest5=1234567";
 //        final String remoteAddress = "10.120.0.56:8848";
 //        final String groupId = "DEFAULT_GROUP";
 //        final String dataId = "testPush.properties";
@@ -79,6 +81,8 @@ public class NacosConfigSender {
 //            }
 //        }
         System.out.println(config);
+
+        configService.publishConfig(dataId, "DEFAULT_GROUP", rule2);
 
         System.out.println(configService.publishConfig(dataId, groupId, rule));
     }

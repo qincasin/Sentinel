@@ -120,15 +120,18 @@ public class CtSph implements Sph {
 
     private Entry entryWithPriority(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args)
         throws BlockException {
+        //从tl 中 获取 context
+        // 一个 request 占用一个 thread。 一个 thread 会绑定一个 context
         Context context = ContextUtil.getContext();
         if (context instanceof NullContext) {
             // The {@link NullContext} indicates that the amount of context has exceeded the threshold,
             // so here init the entry only. No rule checking will be done.
+            //{@link NullContext} 表示上下文的数量已经超过阈值，所以这里只初始化条目。不会进行任何规则检查。
             return new CtEntry(resourceWrapper, null, context);
         }
 
         if (context == null) {
-            // Using default context.  sentinel_default_context
+            // Using default context.  sentinel_default_context 使用默认上下文。 sentinel_default_context
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
@@ -142,6 +145,7 @@ public class CtSph implements Sph {
         /*
          * Means amount of resources (slot chain) exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE},
          * so no rule checking will be done.
+         * 表示资源量（插槽链）超过 {@link Constants.MAX_SLOT_CHAIN_SIZE}，因此不会进行规则检查。
          */
         if (chain == null) {
             return new CtEntry(resourceWrapper, null, context);
@@ -149,7 +153,7 @@ public class CtSph implements Sph {
 
         Entry e = new CtEntry(resourceWrapper, chain, context);
         try {
-
+            //DefaultProcessorSlotChain
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
         } catch (BlockException e1) {
             //走到这里说明 触发熔断了 ！！
@@ -195,7 +199,18 @@ public class CtSph implements Sph {
      * otherwise null will return.
      * </p>
      *
-     * @param resourceWrapper target resource
+     *  获取资源的{@link ProcessorSlotChain}。 新的 {@link ProcessorSlotChain} 将
+     *  如果资源不相关，则创建。
+     *
+     *  <p>相同的资源({@link ResourceWrapper#equals(Object)}) 将共享相同的资源
+     *  全局{@link ProcessorSlotChain}，无论在哪个{@link Context}中。<p/>
+     *
+     *  <p>
+     *  请注意，总 {@link ProcessorSlot} 计数不得超过 {@link Constants#MAX_SLOT_CHAIN_SIZE}，
+     *  否则返回 null。
+     *  </p>
+     *
+     * @param resourceWrapper target resource resourceWrapper
      * @return {@link ProcessorSlotChain} of the resource
      */
     ProcessorSlot<Object> lookProcessChain(ResourceWrapper resourceWrapper) {
@@ -209,6 +224,7 @@ public class CtSph implements Sph {
                         return null;
                     }
 
+                    //创建chain
                     chain = SlotChainProvider.newSlotChain();
                     Map<ResourceWrapper, ProcessorSlotChain> newMap = new HashMap<ResourceWrapper, ProcessorSlotChain>(
                         chainMap.size() + 1);
@@ -351,6 +367,11 @@ public class CtSph implements Sph {
     public Entry entryWithType(String name, int resourceType, EntryType entryType, int count, boolean prioritized,
                                Object[] args) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, entryType, resourceType);
+        /**
+         *  prioritized 为true 表示当前访问必须等待 根据其优先级计算出来的时间   后才能够 通过
+         *  prioritized 为false 表示 请求无需等待
+         *
+         */
         return entryWithPriority(resource, count, prioritized, args);
     }
 

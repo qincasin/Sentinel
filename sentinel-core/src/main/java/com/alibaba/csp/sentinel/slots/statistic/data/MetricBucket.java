@@ -21,12 +21,15 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Represents metrics data in a period of time span.
- *
+ * 表示一段时间跨度内的指标数据。
+ * 统计数据的封装类
  * @author jialiang.linjl
  * @author Eric Zhao
  */
 public class MetricBucket {
 
+    // 统计的数据存放在这里
+    //这里要统计的数据时多维度的，这些维度类型在MetricEvent枚举中
     private final LongAdder[] counters;
 
     private volatile long minRt;

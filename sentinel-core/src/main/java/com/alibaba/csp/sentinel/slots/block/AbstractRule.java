@@ -36,6 +36,7 @@ public abstract class AbstractRule implements Rule {
      * <p>
      * For authority rules, multiple origin name can be separated with comma (',').
      * </p>
+     * 来源
      */
     private String limitApp;
 

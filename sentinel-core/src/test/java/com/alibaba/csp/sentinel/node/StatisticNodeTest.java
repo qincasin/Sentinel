@@ -55,15 +55,19 @@ public class StatisticNodeTest {
 
     /**
      * A simple test for statistic threadNum and qps by using StatisticNode
+     * 使用 StatisticNode 对统计 threadNum 和 qps 的简单测试
      *
      * <p>
      * 20 threads, 30 tasks, every task execute 10 times of bizMethod
      * one bizMethod execute within 1 second, and within 0.5 second interval to exceute next bizMthod
      * so that the total time cost will be within 1 minute
+     * 20个线程，30个任务，每个任务执行10次bizMethod 一个bizMethod在1秒内执行，
+     * 并且在0.5秒的间隔内执行下一个bizMthod，这样总的时间成本将在1分钟内
      * </p>
      *
      * <p>
      * Print the statistic info of StatisticNode and verify some results
+     * 打印StatisticNode的统计信息并验证一些结果
      * </p>
      */
     @Test

@@ -134,6 +134,109 @@ import java.util.Map;
  * fixed rate until all the requests have been processed or time out.
  * </p>
  * </ol>
+ *  <p>
+ *  结合之前收集的运行时统计信息
+ *  插槽（NodeSelectorSlot、ClusterNodeBuilderSlot 和 StatisticSlot）、FlowSlot
+ *  将使用预先设置的规则来决定传入的请求是否应该被
+ *  被封锁。
+ *  </p>
+ *
+ *  <p>
+ *  如果有任何规则，{@code SphU.entry(resourceName)} 将抛出 {@code FlowException}
+ *  触发。用户可以通过捕获 {@code FlowException} 自定义自己的逻辑。
+ *  </p>
+ *
+ *  <p>
+ *  一个资源可以有多个流规则。 FlowSlot 遍历这些规则
+ *  直到其中一个被触发或所有规则都被遍历。
+ *  </p>
+ *
+ *  <p>
+ *  每个{@link FlowRule}主要由这些因素组成：等级、策略、路径。我们
+ *  可以结合这些因素来达到不同的效果。
+ *  </p>
+ *
+ *  <p>
+ *  等级由 {@link FlowRule} 中的 {@code grade} 字段定义。这里，0 表示线程
+ *  隔离和 1 用于请求计数整形 (QPS)。线程数和请求
+ *  count 是在实际运行时收集的，我们可以通过以下方式查看这些统计信息
+ *  以下命令：
+ *  </p>
+ *
+ *  <pre>
+ *  curl http://localhost:8719/tree
+ *
+ * idx id    thread pass  blocked   success total aRt   1m-pass   1m-block   1m-all   exception
+ * 2  abc647 0      460    46          46   1    27      630       276        897      0
+ *  </pre>
+ *
+ *  <ul>
+ *  <li>{@code thread} 表示当前正在处理资源的线程数</li>
+ *  <li>{@code pass} 一秒内传入请求的计数</li>
+ *  <li>{@code blocked} 一秒内被阻止的请求数</li>
+ *  <li>{@code success} 表示 Sentinel 在 1 秒内成功处理的请求数</li>
+ *  <li>{@code RT} 表示请求在一秒内的平均响应时间</li>
+ *  <li>{@code total} 一秒内传入请求和阻塞请求的总和</li>
+ *  <li>{@code 1m-pass} 用于统计一分钟内的传入请求数</li>
+ *  <li>{@code 1m-block} 表示一分钟内被阻塞的请求计数</li>
+ *  <li>{@code 1m-all} 是一分钟内传入和阻塞的请求总数</li>
+ *  <li>{@code exception} 为一秒内的业务（自定义）异常计数</li>
+ *  </ul>
+ *
+ *  此阶段通常用于保护资源不被占用。如果一个资源
+ *  需要很长时间才能完成，线程将开始占用。响应时间越长，
+ *  占用的线程越多
+ *
+ *  除了计数器，线程池或信号量也可以用来实现这一点。
+ *
+ *  - 线程池：分配一个线程池来处理这些资源。当有
+ *  池中没有空闲线程，请求被拒绝而不影响
+ *  其他资源。
+ *
+ *  - 信号量：使用信号量控制线程的并发数
+ *  这个资源。
+ *
+ *  使用线程池的好处是，它可以在超时时优雅地走开。
+ *  但它也给我们带来了上下文切换和额外线程的成本。
+ *  如果传入的请求已经在一个单独的线程中提供服务，
+ *  例如，一个 Servlet HTTP 请求，如果使用线程池，它将几乎使线程数增加一倍。
+ *
+ *  <h3>流量整形</h3>
+ *  <p>
+ *  当 QPS 超过阈值时，Sentinel 会采取行动控制传入的请求，
+ *  并由流规则中的 {@code controlBehavior} 字段配置。
+ *  </p>
+ *  <ol>
+ *  <li>立即拒绝 ({@code RuleConstant.CONTROL_BEHAVIOR_DEFAULT})</li>
+ *  <p>
+ *  这是默认行为。超出的请求立即被拒绝
+ *  并抛出 FlowException
+ *  </p>
+ *
+ *  <li>预热（{@code RuleConstant.CONTROL_BEHAVIOR_WARM_UP}）</li>
+ *  <p>
+ *  如果系统负载已经低了一段时间，并且有大量的
+ *  请求来了，系统可能无法处理所有这些请求
+ *  一次。但是，如果我们稳定地增加传入的请求，系统可以预热
+ *  起来，终于可以处理所有的请求了。
+ *  可以通过设置流规则中的字段{@code warmUpPeriodSec}来配置这个预热时间。
+ *  </p>
+ *
+ *  <li>统一速率限制 ({@code RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER})</li>
+ *  <p>
+ *  该策略严格控制请求之间的间隔。
+ *  换句话说，它允许请求以稳定、统一的速率通过。
+ *  </p>
+ *  <img src="https://raw.githubusercontent.com/wiki/alibaba/Sentinel/image/uniform-speed-queue.png" style="max-width:
+ *  60%;"/>
+ *  <p>
+ *  该策略是<a href="https://en.wikipedia.org/wiki/Leaky_bucket">漏桶</a>的实现。
+ *  用于以稳定的速率处理请求，常用于突发流量（例如消息处理）。
+ *  当大量超出系统容量的请求到达时
+ *  同时，使用该策略的系统将处理请求及其
+ *  固定费率，直到所有请求都已处理或超时。
+ *  </p>
+ *  </ol>
  *
  * @author jialiang.linjl
  * @author Eric Zhao
@@ -161,6 +264,7 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count,
                       boolean prioritized, Object... args) throws Throwable {
+        //check
         checkFlow(resourceWrapper, context, node, count, prioritized);
 
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
@@ -180,6 +284,8 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         @Override
         public Collection<FlowRule> apply(String resource) {
             // Flow rule map should not be null.
+            //获取到所有资源的流控规则
+            //map中的key 为 资源名称，value为资源上加载的所有流控规则
             Map<String, List<FlowRule>> flowRules = FlowRuleManager.getFlowRuleMap();
             return flowRules.get(resource);
         }

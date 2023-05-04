@@ -23,6 +23,9 @@ import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
  * <p>Basic <a href="https://martinfowler.com/bliki/CircuitBreaker.html">circuit breaker</a> interface.</p>
  * 断路器
  * @author Eric Zhao
+ * 将三种熔断器策略 (满调用、异常比、异常数)封装为两种熔断器
+ * --- 响应时间熔断器
+ * --- 异常熔断器
  */
 public interface CircuitBreaker {
 
@@ -51,8 +54,10 @@ public interface CircuitBreaker {
     /**
      * <p>Record a completed request with the context and handle state transformation of the circuit breaker.</p>
      * <p>Called when a <strong>passed</strong> invocation finished.</p>
+     * <p>使用上下文记录完成的请求并处理断路器的状态转换。<p> <p>在<strong>passed<strong>调用完成时调用。<p>
+     *  回调
      *
-     * @param context context of current invocation
+     * @param context context of current invocation 当前调用的上下文上下文
      */
     void onRequestComplete(Context context);
 
@@ -71,11 +76,15 @@ public interface CircuitBreaker {
          * will re-transform to the {@code OPEN} state and wait for the next recovery time point;
          * otherwise the resource will be regarded as "recovered" and the circuit breaker
          * will cease cutting off requests and transform to {@code CLOSED} state.
+         * 在 {@code HALF_OPEN} 状态下，断路器将允许“探测”调用。
+         * 如果按策略调用异常（如慢），断路器将重新转换为{@code OPEN}状态，等待下一个恢复时间点；
+         * 否则资源将被视为“已恢复”，断路器将停止切断请求并转换为 {@code CLOSED} 状态。
          */
         HALF_OPEN,
         /**
          * In {@code CLOSED} state, all requests are permitted. When current metric value exceeds the threshold,
          * the circuit breaker will transform to {@code OPEN} state.
+         * 关闭状态，所有请求可以通过
          */
         CLOSED
     }

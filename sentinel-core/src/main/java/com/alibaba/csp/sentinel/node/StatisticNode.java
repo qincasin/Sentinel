@@ -88,9 +88,9 @@ import com.alibaba.csp.sentinel.util.function.Predicate;
  *
  * <p>统计节点保存三种实时统计指标：</p>
  *  <ol>
- *  <li>二级指标 ({@code rollingCounterInSecond})</li>
- *  <li>以分钟为单位的指标 ({@code rollingCounterInMinute})</li>
- *  <li>线程数</li>
+ * <li>metrics in second level ({@code rollingCounterInSecond})</li>
+ * <li>metrics in minute level ({@code rollingCounterInMinute})</li>
+ * <li>thread count</li>
  *  </ol>
  *
  *  <p>
@@ -151,6 +151,9 @@ public class StatisticNode implements Node {
      * Holds statistics of the recent {@code INTERVAL} seconds. The {@code INTERVAL} is divided into time spans
      * by given {@code sampleCount}.
      * 保存最近 {@code INTERVAL} 秒的统计信息。 {@code INTERVAL} 按给定的 {@code sampleCount} 划分为时间跨度
+     * 定义了一个使用数组保存数据的 计量器
+     * SampleCountProperty.SAMPLE_COUNT ---> 样本窗口数量   默认值 为 2
+     * IntervalProperty.INTERVAL ---> 时间窗口长度   默认值 为 1000ms
      */
     private transient volatile Metric rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT,
         IntervalProperty.INTERVAL);
@@ -260,6 +263,8 @@ public class StatisticNode implements Node {
 
     @Override
     public double passQps() {
+        // rollingCounterInSecond.pass() 当前时间窗口中 统计 的通过请求数量
+        //rollingCounterInSecond.getWindowIntervalInSec() 时间窗口长度
         return rollingCounterInSecond.pass() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
@@ -306,7 +311,9 @@ public class StatisticNode implements Node {
 
     @Override
     public void addPassRequest(int count) {
+        //滑动窗口 --- 秒
         rollingCounterInSecond.addPass(count);
+        //分钟
         rollingCounterInMinute.addPass(count);
     }
 

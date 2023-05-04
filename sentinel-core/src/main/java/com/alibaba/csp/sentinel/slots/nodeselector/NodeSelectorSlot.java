@@ -183,6 +183,7 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
 
         //替换 Context 的 curNode 为当前 DefaultNode
         context.setCurNode(node);
+        //触发下一个节点
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 

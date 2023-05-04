@@ -20,6 +20,7 @@ import com.alibaba.csp.sentinel.context.Context;
 /**
  * @author qinan.qn
  * @author jialiang.linjl
+ * 单向链表，  默认包含一个 节点 ，默认包含一个节点， 且有两个指针first 与 end 同时指向这个节点
  */
 public class DefaultProcessorSlotChain extends ProcessorSlotChain {
 
@@ -52,9 +53,9 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain {
 
     @Override
     public void addLast(AbstractLinkedProcessorSlot<?> protocolProcessor) {
-        //设置下一个处理器
+        //当前节点 指向 下一个节点
         end.setNext(protocolProcessor);
-        //将下一个处理器指向 end
+        //当前节点的 end 节点，指向 下一个节点
         end = protocolProcessor;
     }
 
@@ -77,6 +78,7 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain {
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, Object t, int count, boolean prioritized, Object... args)
         throws Throwable {
+        //first.transformEntry 之后，entry 调用时 进入到 first 实现的entry中，进而走fireEntry 实现first的next节点处理
         first.transformEntry(context, resourceWrapper, t, count, prioritized, args);
     }
 

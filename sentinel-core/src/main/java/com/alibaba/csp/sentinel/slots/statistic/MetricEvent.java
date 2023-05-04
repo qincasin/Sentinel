@@ -17,6 +17,7 @@ package com.alibaba.csp.sentinel.slots.statistic;
 
 /**
  * @author Eric Zhao
+ * 数据统计维度
  */
 public enum MetricEvent {
 

@@ -56,6 +56,8 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
                       boolean prioritized, Object... args) throws Throwable {
         try {
             // Do some checking.
+            //调用 SlotChain中后续的所有 Slot，完成所有规则的检测
+            //在执行过程中可能会抛出异常，例如 规则检测未通过，抛出BlockException
             fireEntry(context, resourceWrapper, node, count, prioritized, args);
 
             // Request passed, add thread count and pass count.

@@ -25,13 +25,17 @@ import com.alibaba.csp.sentinel.util.TimeUtil;
 
 /**
  * <p>
- * Basic data structure for statistic metrics in Sentinel.
+ * Basic data structure for statistic metrics in Sentinel. Sentinel 中统计指标的基本数据结构。
  * </p>
  * <p>
  * Leap array use sliding window algorithm to count data. Each bucket cover {@code windowLengthInMs} time span,
  * and the total time span is {@link #intervalInMs}, so the total bucket amount is:
  * {@code sampleCount = intervalInMs / windowLengthInMs}.
  * </p>
+ * Leap 数组使用滑动窗口算法对数据进行计数。
+ * 每个bucket覆盖{@code windowLengthInMs}时间跨度，
+ * 总时间跨度为{@link intervalInMs}，
+ * 所以bucket总数量为：{@code sampleCount = intervalInMs / windowLengthInMs}。
  *
  * @param <T> type of statistic data
  * @author jialiang.linjl
@@ -40,8 +44,11 @@ import com.alibaba.csp.sentinel.util.TimeUtil;
  */
 public abstract class LeapArray<T> {
 
+    //样本窗口长度
     protected int windowLengthInMs;
+    //一个时间窗中包含的时间窗适量
     protected int sampleCount;
+    // 时间窗口长度
     protected int intervalInMs;
     private double intervalInSecond;
 
@@ -73,6 +80,7 @@ public abstract class LeapArray<T> {
 
     /**
      * Get the bucket at current timestamp.
+     * 获取当前时间戳的存储桶。
      *
      * @return the bucket at current timestamp
      */
@@ -118,6 +126,7 @@ public abstract class LeapArray<T> {
             return null;
         }
 
+        //计算当前时间所在的样本窗口idx
         int idx = calculateTimeIdx(timeMillis);
         // Calculate current bucket start time.
         long windowStart = calculateWindowStart(timeMillis);
@@ -144,14 +153,17 @@ public abstract class LeapArray<T> {
                  * then try to update circular array via a CAS operation. Only one thread can
                  * succeed to update, while other threads yield its time slice.
                  */
+                //创建一个时间窗口
                 WindowWrap<T> window = new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
                 if (array.compareAndSet(idx, null, window)) {
                     // Successfully updated, return the created bucket.
                     return window;
                 } else {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
+                    //争用失败，线程将产生它的时间片来等待可用的桶。
                     Thread.yield();
                 }
+                //相同
             } else if (windowStart == old.windowStart()) {
                 /*
                  *     B0       B1      B2     B3      B4
@@ -165,6 +177,8 @@ public abstract class LeapArray<T> {
                  * that means the time is within the bucket, so directly return the bucket.
                  */
                 return old;
+                //大于
+                //计算出的样本窗口已经过时了，需要将原来的样本窗口替换
             } else if (windowStart > old.windowStart()) {
                 /*
                  *   (old)
@@ -179,9 +193,13 @@ public abstract class LeapArray<T> {
                  * the bucket is deprecated. We have to reset the bucket to current {@code windowStart}.
                  * Note that the reset and clean-up operations are hard to be atomic,
                  * so we need a update lock to guarantee the correctness of bucket update.
+                 * 如果旧存储桶的开始时间戳落后于提供的时间，则意味着该存储桶已被弃用。
+                 * 我们必须将存储桶重置为当前的 {@code windowStart}。
+                 * 注意重置和清理操作很难是原子的，所以我们需要一个更新锁来保证桶更新的正确性。
                  *
                  * The update lock is conditional (tiny scope) and will take effect only when
                  * bucket is deprecated, so in most cases it won't lead to performance loss.
+                 * 更新锁是有条件的（范围很小），只有在桶被弃用时才会生效，所以在大多数情况下不会导致性能损失。
                  */
                 if (updateLock.tryLock()) {
                     try {
@@ -194,6 +212,7 @@ public abstract class LeapArray<T> {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
+                //小于
             } else if (windowStart < old.windowStart()) {
                 // Should not go through here, as the provided time is already behind.
                 return new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
@@ -259,6 +278,7 @@ public abstract class LeapArray<T> {
     /**
      * Check if a bucket is deprecated, which means that the bucket
      * has been behind for at least an entire window time span.
+     * 检查存储桶是否已弃用，这意味着该存储桶已落后至少整个窗口时间跨度。
      *
      * @param windowWrap a non-null bucket
      * @return true if the bucket is deprecated; otherwise false

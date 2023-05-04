@@ -49,6 +49,7 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
     void performChecking(Context context, ResourceWrapper r) throws BlockException {
         //根据名称拿到所有的断路器
         List<CircuitBreaker> circuitBreakers = DegradeRuleManager.getCircuitBreakers(r.getName());
+        //熔断器为空，直接结束
         if (circuitBreakers == null || circuitBreakers.isEmpty()) {
             return;
         }

@@ -29,6 +29,7 @@ import com.alibaba.csp.sentinel.util.function.Predicate;
 
 /**
  * The basic metric class in Sentinel using a {@link BucketLeapArray} internal.
+ * Sentinel 中使用 {@link BucketLeapArray} 内部的基本度量类。
  *
  * @author jialiang.linjl
  * @author Eric Zhao
@@ -106,8 +107,10 @@ public class ArrayMetric implements Metric {
 
     @Override
     public long pass() {
+        //更新array 中当前时间点所在的样本窗口实例中的数据
         data.currentWindow();
         long pass = 0;
+        //将当前时间窗口中的所有样本窗口统计的value 记录到 result 中
         List<MetricBucket> list = data.values();
 
         for (MetricBucket window : list) {

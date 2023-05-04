@@ -22,6 +22,7 @@ import com.alibaba.csp.sentinel.slots.clusterbuilder.ClusterBuilderSlot;
 
 /**
  * Holds statistic buckets count per second.
+ * 每秒保存统计桶计数
  *
  * @author jialiang.linjl
  * @author CarpenterLee
@@ -33,8 +34,9 @@ public class SampleCountProperty {
      * Statistic buckets count per second. This variable determines sensitivity of the QPS calculation.
      * DO NOT MODIFY this value directly, use {@link #updateSampleCount(int)}, otherwise the modification will not
      * take effect.
+     * 统计桶每秒计数。该变量决定了 QPS 计算的灵敏度。不要直接修改这个值，使用{@link updateSampleCount(int)}，否则修改不会生效。
      * </p>
-     * Node that this value must be divisor of 1000.
+     * Node that this value must be divisor of 1000. 该值必须是 1000 的除数的节点。
      */
     public static volatile int SAMPLE_COUNT = 2;
 

@@ -32,6 +32,7 @@ public final class SlotChainProvider {
     /**
      * The load and pick process is not thread-safe, but it's okay since the method should be only invoked
      * via {@code lookProcessChain} in {@link com.alibaba.csp.sentinel.CtSph} under lock.
+     * 加载和拾取过程不是线程安全的，但没关系，因为该方法只能通过 {@link com.alibaba.csp.sentinel.CtSph} 中的 {@code lookProcessChain} 在锁定状态下调用。
      *
      * @return new created slot chain
      */
@@ -41,6 +42,7 @@ public final class SlotChainProvider {
         }
 
         // Resolve the slot chain builder SPI.
+        //解析槽链生成器 SPI。
         slotChainBuilder = SpiLoader.of(SlotChainBuilder.class).loadFirstInstanceOrDefault();
 
         if (slotChainBuilder == null) {

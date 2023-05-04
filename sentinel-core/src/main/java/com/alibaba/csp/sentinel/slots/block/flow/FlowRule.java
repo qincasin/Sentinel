@@ -29,6 +29,15 @@ import com.alibaba.csp.sentinel.slots.block.RuleConstant;
  *     <li>The {@link #controlBehavior} represents the QPS shaping behavior (actions on incoming request when QPS
  *     exceeds the threshold).</li>
  * </ul>
+ * 每个流程规则主要由三个因素组成：<strong>等级</strong>，
+ *  <strong>策略</strong>和<strong>控制行为</strong>：
+ *  </p>
+ *  <ul>
+ *  <li>{@link #grade} 表示流控制的阈值类型（按 QPS 或线程数）。</li>
+ *  <li>{@link #strategy} 表示基于调用关系的策略。</li>
+ *  <li>{@link #controlBehavior} 表示 QPS 整形行为（QPS 时对传入请求的操作
+ *  超过阈值）。</li>
+ *  </ul>
  *
  * @author jialiang.linjl
  * @author Eric Zhao
@@ -60,19 +69,21 @@ public class FlowRule extends AbstractRule {
      * Flow control strategy based on invocation chain.
      *
      * {@link RuleConstant#STRATEGY_DIRECT} for direct flow control (by origin);
-     * {@link RuleConstant#STRATEGY_RELATE} for relevant flow control (with relevant resource);
+     * {@link RuleConstant#STRATEGY_RELATE} for relevant flow control (with relevant resource); 关联流控
      * {@link RuleConstant#STRATEGY_CHAIN} for chain flow control (by entrance resource).
      */
     private int strategy = RuleConstant.STRATEGY_DIRECT;
 
     /**
      * Reference resource in flow control with relevant resource or context.
+     * 使用相关资源或上下文引用流控制中的资源。--- 流控模式为关联流控时的 关联资源
      */
     private String refResource;
 
     /**
      * Rate limiter control behavior.
      * 0. default(reject directly), 1. warm up, 2. rate limiter, 3. warm up + rate limiter
+     * 0 快速失败，1 warn up -- 令牌桶算法，2 排队等待-- 漏斗算法 ；3 warn up + 排毒等待
      */
     private int controlBehavior = RuleConstant.CONTROL_BEHAVIOR_DEFAULT;
 
