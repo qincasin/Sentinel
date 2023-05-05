@@ -31,7 +31,7 @@ public abstract class ResourceWrapper {
     protected final String name; //资源名称
 
     protected final EntryType entryType; //流量类型 IN 和 OUT 简单理解为接收处理请求与发送请求; 当接收到别的服务或者前端发来的请求，那么 entryType 为 IN；当向其他服务发起请求时，那么 entryType 就为 OUT
-    protected final int resourceType;   //资源类型  例如 Dubbo RPC、Web MVC 或者 API Gateway 网关
+    protected final int resourceType;   //资源类型  例如 Dubbo RPC、Web MVC 或者 API Gateway 网关 @see ResourceTypeConstants
 
     public ResourceWrapper(String name, EntryType entryType, int resourceType) {
         AssertUtil.notEmpty(name, "resource name cannot be empty");
