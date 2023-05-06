@@ -167,6 +167,37 @@ public class MetricFetcher {
 
     /**
      * fetch metric between [startTime, endTime], both side inclusive
+     * 该代码实现的功能是从应用的多个机器上获取指定时间范围内的指标数据，并将获取到的数据写入到数据库中。
+     * <p>
+     * 具体步骤如下：
+     * <p>
+     * 1. 检查最大等待时间是否大于0，如果小于等于0则抛出异常。
+     * <p>
+     * 2. 获取应用的详细信息。
+     * <p>
+     * 3. 如果应用已经停止运行（即已经死亡），则自动将其从应用管理中移除，并返回。
+     * <p>
+     * 4. 获取应用运行的机器列表。
+     * <p>
+     * 5. 如果机器列表为空，则直接返回。
+     * <p>
+     * 6. 初始化计数器和一个存储指标数据的Map。
+     * <p>
+     * 7. 遍历机器列表，对于每个机器，如果机器已经停止运行，则自动将其从应用中移除；如果机器不健康，则跳过该机器。
+     * <p>
+     * 8. 构造获取指标数据的HTTP请求，并发送请求。
+     * <p>
+     * 9. 如果请求成功，将获取到的指标数据解析并保存到Map中，累加成功计数器。
+     * <p>
+     * 10. 如果请求失败，累加失败计数器，并记录日志。
+     * <p>
+     * 11. 无论请求成功或失败，计数器都应当递减。
+     * <p>
+     * 12. 等待所有请求完成或等待时间超时。
+     * <p>
+     * 13. 将获取到的指标数据写入数据库中。
+     * <p>
+     * 14. 记录日志，输出本次获取指标数据的相关信息。
      */
     private void fetchOnce(String app, long startTime, long endTime, int maxWaitSeconds) {
         if (maxWaitSeconds <= 0) {
@@ -258,6 +289,29 @@ public class MetricFetcher {
         writeMetric(metricMap);
     }
 
+    /**
+     * 该代码实现的功能是定期获取某个应用程序的度量指标数据，并将其异步提交到后台任务中进行处理。具体实现步骤如下：
+     * <p>
+     * 1. 获取当前时间戳now。
+     * <p>
+     * 2. 计算最后一次获取数据的时间戳lastFetchMs，其值为now减去最大获取间隔时间MAX_LAST_FETCH_INTERVAL_MS。
+     * <p>
+     * 3. 如果appLastFetchTime中已存在该应用程序的最后获取时间，则将lastFetchMs与该时间加上1000毫秒的较大值作为最后获取时间。
+     * <p>
+     * 4. 将lastFetchMs的毫秒部分去掉，保留秒级时间戳。
+     * <p>
+     * 5. 计算获取数据的结束时间endTime，其值为最后获取时间加上获取间隔时间FETCH_INTERVAL_SECOND。
+     * <p>
+     * 6. 如果endTime距离当前时间不足2秒，则返回，不进行数据获取。
+     * <p>
+     * 7. 将该应用程序的最后获取时间更新为endTime。
+     * <p>
+     * 8. 将获取数据的任务提交到后台任务中进行处理。该任务会调用fetchOnce方法进行实际的数据获取操作。
+     * <p>
+     * 9. 如果提交任务失败，则记录日志并忽略该次数据获取。
+     *
+     * @param app
+     */
     private void doFetchAppMetric(final String app) {
         long now = System.currentTimeMillis();
         long lastFetchMs = now - MAX_LAST_FETCH_INTERVAL_MS;

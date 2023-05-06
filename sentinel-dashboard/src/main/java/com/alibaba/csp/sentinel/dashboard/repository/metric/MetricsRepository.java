@@ -27,6 +27,7 @@ public interface MetricsRepository<T> {
 
     /**
      * Save the metric to the storage repository.
+     * 保存单个metric
      *
      * @param metric metric data to save
      */
@@ -34,6 +35,7 @@ public interface MetricsRepository<T> {
 
     /**
      * Save all metrics to the storage repository.
+     * 保存多个metric
      *
      * @param metrics metrics to save
      */
@@ -41,6 +43,7 @@ public interface MetricsRepository<T> {
 
     /**
      * Get all metrics by {@code appName} and {@code resourceName} between a period of time.
+     * 通过应用名名称、资源名称、开始时间、结束时间查询metric列表
      *
      * @param app       application name for Sentinel
      * @param resource  resource name
@@ -52,6 +55,7 @@ public interface MetricsRepository<T> {
 
     /**
      * List resource name of provided application name.
+     * 通过应用名称查询资源列表
      *
      * @param app application name
      * @return list of resources
