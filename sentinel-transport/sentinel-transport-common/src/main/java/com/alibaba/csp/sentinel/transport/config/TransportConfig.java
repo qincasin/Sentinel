@@ -22,6 +22,8 @@ import com.alibaba.csp.sentinel.util.StringUtil;
 import com.alibaba.csp.sentinel.transport.endpoint.Endpoint;
 import com.alibaba.csp.sentinel.transport.endpoint.Protocol;
 
+import com.alibaba.csp.sentinel.util.function.Tuple2;
+import com.alibaba.fastjson.JSON;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,19 +59,15 @@ public class TransportConfig {
         }
     }
 
-    /**
-     * Get a list of Endpoint(protocol, ip/domain, port) indicating Sentinel Dashboard's address.<br>
-     * NOTE: only support <b>HTTP</b> and <b>HTTPS</b> protocol
-     *
-     * @return list of Endpoint(protocol, ip/domain, port). <br>
-     *         <b>May not be null</b>. <br>
-     *         An empty list returned when not configured.
-     */
-    public static List<Endpoint> getConsoleServerList() {
-        String config = SentinelConfig.getConfig(CONSOLE_SERVER);
-        List<Endpoint> list = new ArrayList<Endpoint>();
+    public static void main(String[] args) {
+        a("https://api-paas-di.yunxuetang.com.cn/sentinel-dashboard");
+        // b("https://api-paas-di.yunxuetang.com.cn/sentinel-dashboard");
+    }
+
+    public static void b(String config){
+        List<Tuple2<String, Integer>> list = new ArrayList<Tuple2<String, Integer>>();
         if (StringUtil.isBlank(config)) {
-            return list;
+            return ;
         }
 
         int pos = -1;
@@ -85,6 +83,130 @@ public class TransportConfig {
             }
             if (pos <= cur) {
                 cur ++;
+                continue;
+            }
+            // parsing
+            String ipPortStr = config.substring(cur, pos);
+            cur = pos + 1;
+            if (StringUtil.isBlank(ipPortStr)) {
+                continue;
+            }
+            ipPortStr = ipPortStr.trim();
+            if (ipPortStr.startsWith("http://")) {
+                ipPortStr = ipPortStr.substring(7);
+            }
+            int index = ipPortStr.indexOf(":");
+            int port = 80;
+            if (index == 0) {
+                // skip
+                continue;
+            }
+            String host = ipPortStr;
+            if (index >= 0) {
+                try {
+                    port = Integer.parseInt(ipPortStr.substring(index + 1));
+                    if (port <= 1 || port >= 65535) {
+                        throw new RuntimeException("Port number [" + port + "] over range");
+                    }
+                } catch (Exception e) {
+                    RecordLog.warn("Parse port of dashboard server failed: " + ipPortStr, e);
+                    // skip
+                    continue;
+                }
+                host = ipPortStr.substring(0, index);
+            }
+            list.add(Tuple2.of(host, port));
+        }
+        System.out.println(list);
+    }
+
+    private static void a(String config) {
+        List<Endpoint> list = new ArrayList<Endpoint>();
+        if (StringUtil.isBlank(config)) {
+            return;
+        }
+        int pos = -1;
+        int cur = 0;
+        while (true) {
+            pos = config.indexOf(',', cur);
+            if (cur < config.length() - 1 && pos < 0) {
+                // for single segment, pos move to the end
+                pos = config.length();
+            }
+            if (pos < 0) {
+                break;
+            }
+            if (pos <= cur) {
+                cur++;
+                continue;
+            }
+            // parsing
+            String ipPortStr = config.substring(cur, pos);
+            cur = pos + 1;
+            if (StringUtil.isBlank(ipPortStr)) {
+                continue;
+            }
+            ipPortStr = ipPortStr.trim();
+            int port = 80;
+            Protocol protocol = Protocol.HTTP;
+            if (ipPortStr.startsWith("http://")) {
+                ipPortStr = ipPortStr.substring(7);
+            } else if (ipPortStr.startsWith("https://")) {
+                ipPortStr = ipPortStr.substring(8);
+                port = 443;
+                protocol = Protocol.HTTPS;
+            }
+            int index = ipPortStr.indexOf(":");
+            if (index == 0) {
+                // skip
+                continue;
+            }
+            String host = ipPortStr;
+            if (index >= 0) {
+                try {
+                    port = Integer.parseInt(ipPortStr.substring(index + 1));
+                    if (port <= 1 || port >= 65535) {
+                        throw new RuntimeException("Port number [" + port + "] over range");
+                    }
+                } catch (Exception e) {
+                    RecordLog.warn("Parse port of dashboard server failed: " + ipPortStr, e);
+                    // skip
+                    continue;
+                }
+                host = ipPortStr.substring(0, index);
+            }
+            list.add(new Endpoint(protocol, host, port));
+        }
+        System.out.println(JSON.toJSONString(list));
+    }
+
+    /**
+     * Get a list of Endpoint(protocol, ip/domain, port) indicating Sentinel Dashboard's address.<br>
+     * NOTE: only support <b>HTTP</b> and <b>HTTPS</b> protocol
+     *
+     * @return list of Endpoint(protocol, ip/domain, port). <br>
+     * <b>May not be null</b>. <br>
+     * An empty list returned when not configured.
+     */
+    public static List<Endpoint> getConsoleServerList() {
+        String config = SentinelConfig.getConfig(CONSOLE_SERVER);
+        List<Endpoint> list = new ArrayList<Endpoint>();
+        if (StringUtil.isBlank(config)) {
+            return list;
+        }
+        int pos = -1;
+        int cur = 0;
+        while (true) {
+            pos = config.indexOf(',', cur);
+            if (cur < config.length() - 1 && pos < 0) {
+                // for single segment, pos move to the end
+                pos = config.length();
+            }
+            if (pos < 0) {
+                break;
+            }
+            if (pos <= cur) {
+                cur++;
                 continue;
             }
             // parsing
@@ -132,6 +254,15 @@ public class TransportConfig {
     }
 
     /**
+     * Set real port this HTTP server uses.
+     *
+     * @param port real port.
+     */
+    public static void setRuntimePort(int port) {
+        runtimePort = port;
+    }
+
+    /**
      * Get Server port of this HTTP server.
      *
      * @return the port, maybe null if not configured.
@@ -141,15 +272,6 @@ public class TransportConfig {
             return String.valueOf(runtimePort);
         }
         return SentinelConfig.getConfig(SERVER_PORT);
-    }
-
-    /**
-     * Set real port this HTTP server uses.
-     *
-     * @param port real port.
-     */
-    public static void setRuntimePort(int port) {
-        runtimePort = port;
     }
 
     /**
